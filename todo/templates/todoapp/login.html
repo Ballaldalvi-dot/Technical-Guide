@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        .login-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+        }
+        .login-container h2 {
+            color: aliceblue; /* Change this to your desired color */
+            font-size: 2rem; /* Change this to your desired font size */
+        }
+
+        .login-container label {
+            color: aliceblue; /* Change this to your desired color for form labels */
+            font-size: 1rem;
+        }
+        
+        /* Style for Register button */
+        .register-btn {
+            display: inline-block;
+            margin-top: 10px;
+            margin-right: 500px;
+            padding: 10px 5px;
+            background-color: #28a745; /* Green background */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .register-btn:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+    </style>
+</head>
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'img/style.css'}">
+
+<body style="background-image: url('{% static 'img/abstract-digital-technology-background-with-concept-security-vector.jpg' %}');background-repeat: no-repeat;background-size: 100%;">
+
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="height: 100vh;">
+        <div class="col-md-6 login-container">
+            <h2>Task Login</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <div class="text-center mt-3">
+                <a href="{% url 'register' %}" class="register-btn">Register</a> <!-- Highlighted Register Button -->
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

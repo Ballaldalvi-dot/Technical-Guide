@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        .background-image {
+            background-image: url("{% static 'img/Benjamin franklin.jpg' %}");
+            background-color: bisque;
+            background-size: 15%;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100%;
+            display: flex;
+            align-items: flex-start; /* Align items at the start */
+            justify-content: center;
+            position: relative;
+        }
+        .content {
+            background: transparent;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative; /* Required for absolute positioning of slides */
+            width: 100%; /* Make content take full width */
+            max-width: 600px; /* Set a maximum width for better appearance */
+            margin-top: 20px; /* Space from the top */
+        }
+        h1 {
+            color: #c31b1b;
+            margin: 20px 0; /* Add margin for spacing */
+            text-align: center; /* Center the title */
+            width: 100%; /* Ensure it takes full width */
+        }
+        .slide {
+            font-size: 28px;
+            color: darkblue;
+            opacity: 0; /* Hide initially */
+            transition: opacity 1.0s ease-in-out; /* Fade transition speed */
+            position: absolute; /* Positioning for overlap */
+            left: 0; /* Align to the left */
+            width: auto; /* Allow width to adjust */
+            top: 230%; /* Center vertically */
+            transform: translateY(-50%); /* Adjust for centering */
+            font-style: italic;
+        }
+        .slide.active {
+            opacity: 1; /* Show active slide */
+        }
+        /* Style for the Proceed button */
+        .proceed-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745; /* Green color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .proceed-btn:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+        .below-background-text {
+            background-color:bisque; /* Light background color */
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            color: #333;
+            font-style: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image">
+        <!-- Proceed button at top-right corner -->
+        <a href="{% url 'todo_list' %}" class="proceed-btn">Proceed</a>
+        
+        <div class="content">
+            <h1></h1>
+            <div id="slideshow">
+                <p class="slide active">“Tell me and I forget, teach me and I may remember, involve me and I learn” ” </p>
+                <p class="slide">““Lose no time. Be always employed in something useful. Cut off all unnecessary actions.””</p>
+                <p class="slide">““Don’t put off until tomorrow what you can do today.””</p>
+                <p class="slide">“An investment in knowledge pays the best interest.”
+
+                </p>
+
+            </div>
+            <div class="below-background-text">
+                <p>BENJAMIN FRANKLIN(1760-1790)</p>
+                <p>FOUNDER OF TO-DO-LIST</p>
+            </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active'); // Remove active class from all
+            });
+            slides[index].classList.add('active'); // Add active class to the current slide
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length; // Cycle through slides
+            showSlide(currentSlide);
+        }
+
+        // Show the first slide initially
+        showSlide(currentSlide);
+        // Change slide every 3 seconds
+        setInterval(nextSlide, 3000);
+    </script>
+</body>
+</html>

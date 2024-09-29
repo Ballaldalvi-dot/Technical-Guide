@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Todo List</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <style>
+    body {
+      background-color: cornsilk;
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      font-style: initial;
+    }
+    label {
+      display: inline-block;
+      margin-bottom: .5rem;
+    }
+    *, ::after, ::before {
+      box-sizing: border-box;
+    }
+    label {
+      cursor: default;
+    }
+  </style>
+</head>
+{% load static %}
+
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-sm-7">
+            <form action="{% url 'create_todo' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control" id="title" placeholder="Enter title" name="title">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="reminder">Date And Time</label>
+                    <input type="datetime-local" class="form-control" id="reminder" name="reminder">
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select class="form-control" id="priority" name="priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-dark">Submit</button>
+            </form>
+        </div>
+        <div class="col-sm-5 text-right">
+            {% if user.is_authenticated %}
+                <a class="btn btn-danger" href="{% url 'logout' %}">Logout</a>
+            {% else %}
+                <a class="btn btn-primary" href="{% url 'login' %}">Login</a>
+                <a class="btn btn-secondary" href="{% url 'register' %}">Register</a>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+    {% if reminder_alerts %}
+        <div class="alert alert-warning">
+            <strong>Reminder!</strong> The following tasks are due:
+            <ul>
+                {% for task in reminder_alerts %}
+                    <li>{{ task }} - <span class="text-danger">Complete the task!</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="alert alert-info">
+        <strong>Welcome!</strong> You can start adding tasks to your to-do list.
+
+        <table class="table mt=3">
+            <thead>
+                <tr>
+                    <th>SNo.</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Date And Time</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for todo in todos %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="title">{{ todo.title }}</td>
+                    <td class="description">{{ todo.description }}</td>
+                    <td class="reminder" data-notified="false">
+                        {% if todo.reminder %}
+                        {{ todo.reminder }}
+                        {% else %}
+                        No reminder
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if todo.priority %}
+                        {{ todo.priority }}
+                        {% else %}
+                        unprioritized
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if todo.completed %}
+                        <span class="badge badge-success">completed</span>
+                        {% else %}
+                        <a class="btn btn-sm btn-dark" href="{% url 'complete_todo' todo.id %}">Complete</a>
+                        <button class="btn btn-sm btn-info remind-btn" data-id="{{ todo.id }}" data-toggle="modal" data-target="#remindModal">Remind</button>
+                        <button class="btn btn-sm btn-success share-btn" data-title="{{ todo.title }}">Share</button> <!-- Share Button -->
+                        {% endif %}
+                        <a class="btn btn-sm btn-danger" href="{% url 'delete_todo' todo.id %}">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No todos found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Reminder Modal -->
+<div class="modal fade" id="remindModal" tabindex="-1" role="dialog" aria-labelledby="remindModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="remindModalLabel">Set Reminder</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="remindForm">
+                    <div class="form-group">
+                        <label for="remindDateTime">Date and Time</label>
+                        <input type="datetime-local" class="form-control" id="remindDateTime" required>
+                    </div>
+                    <div class="form-group"></div>
+                        <label for="remindEmail">Email</label>
+                        <input type="email" class="form-control" id="remindEmail" placeholder="Enter email" required>
+                    </div>
+                    <input type="hidden" id="todoId" value="">
+                    <button type="submit" class="btn btn-primary">Set Reminder</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+   $(document).ready(function() {
+    const reminderMessages = [
+        "Your task is due! Please complete it as soon as possible.",
+        "Don't forget about your task! It's time to get it done!",
+        "Reminder! Your task is waiting for you.",
+        "Heads up! Your task is due now!",
+    ];
+    
+    let messageIndex = 0; // To keep track of which message to display
+
+    function playReminder() {
+        const audio = new Audio("{% static 'img/beep.mp3' %}");
+        audio.play();
+
+        const message = reminderMessages[messageIndex % reminderMessages.length];
+        messageIndex++;
+
+        const reminderAlert = `<div class="alert alert-warning" style="background-color: red; color: white; text-align: center;">
+            <strong>REMINDER ALERT:</strong> ${message}
+        </div>`;
+        $('body').prepend(reminderAlert);
+    }
+
+    function sendEmailNotification(email) {
+        // Simulating email sending (replace this with actual backend call for sending email)
+        setTimeout(() => {
+            alert(`Email reminder sent to: ${email}`);
+        }, 3000); // Wait for 3 seconds before sending the email
+    }
+
+    $('.remind-btn').click(function() {
+        const todoId = $(this).data('id');
+        $('#todoId').val(todoId);
+    });
+
+    $('#remindForm').submit(function(event) {
+        event.preventDefault();
+        const remindTime = $('#remindDateTime').val();
+        const email = $('#remindEmail').val();
+        const todoId = $('#todoId').val();
+
+        // Validate inputs
+        if (!remindTime || !email) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        // Calculate the delay
+        const now = new Date();
+        const reminderDate = new Date(remindTime);
+        const delay = reminderDate - now;
+
+        if (delay > 0) {
+            setTimeout(() => {
+                // Play the reminder for the first time
+                playReminder();
+
+                // Send the email after a few seconds (delayed)
+                setTimeout(() => {
+                    sendEmailNotification(email);
+                }, 5000); // 5-second delay after reminder alert is shown
+
+                // Set an interval for every 5 minutes after the first reminder
+                setInterval(() => {
+                    playReminder();
+                    sendEmailNotification(email);
+                }, 15 * 60 * 1000); // 15 minutes in milliseconds
+            }, delay);
+
+            $('#remindModal').modal('hide');
+        } else {
+            alert('Please select a future date and time.');
+        }
+    });
+});
+
+</script>
+<script>
+    // Share functionality
+    $('.share-btn').click(function() {
+        const title = $(this).data('title'); // Get the title of the todo item
+        const shareMessage = `Please help me to complete the task: ${title}`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Todo List Task',
+                text: shareMessage,
+                url: window.location.href // URL of your todo list page
+            }).then(() => {
+                console.log('Share was successful.');
+            }).catch((error) => {
+                console.error('Sharing failed:', error);
+            });
+        } else {
+            // Fallback for browsers that do not support the Web Share API
+            alert("Your browser does not support sharing. Please copy the message manually: " + shareMessage);
+        }
+    });
+</script>
+
+
+
+
+</body>
+</html>
